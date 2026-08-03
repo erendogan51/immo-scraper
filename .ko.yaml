@@ -1,0 +1,17 @@
+builds:
+  - id: receiver
+    main: ./cmd/immo-scrapper
+    flags:
+      - -trimpath
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    ldflags:
+      - -s
+      - -w
+      - -X main.Version={{.Git.Tag}}
+      - -X main.GitCommit={{.Git.ShortCommit}}
+      - -X main.BuildTime={{.Git.CommitDate}}
+defaultPlatforms:
+  - linux/arm64
+  - linux/amd64

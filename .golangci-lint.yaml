@@ -1,0 +1,37 @@
+version: "2"
+linters:
+  enable:
+    - dupl
+    - gocritic
+    - gocyclo
+    - gosec
+    - misspell
+    - nakedret
+    - paralleltest
+    - revive
+    - unconvert
+  settings:
+    dupl:
+      threshold: 250
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - tmp/
+      - container_data/
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

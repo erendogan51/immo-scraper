@@ -1,0 +1,25 @@
+# (mandatory)
+# Path to coverprofile file (output of `go test -coverprofile` command)
+profile: ./coverage.out
+
+# Holds coverage thresholds percentages, values should be in range [0-100]
+threshold:
+  # (optional; default 0)
+  # The minimum coverage that each file should have
+  file: 0
+
+  # (optional; default 0)
+  # The minimum coverage that each package should have
+  package: 0
+
+  # (optional; default 0)
+  # The minimum total coverage project should have
+  total: 0
+
+# Holds regexp rules which will exclude matched files or packages from coverage statistics
+exclude:
+  # Exclude files or packages matching their paths
+  paths:
+    - \.pb\.go$    # excludes all protobuf generated files
+    - \.gen\.go$   # excludes all generated files
+    - ^pkg/db # exclude package `pkg/bar`
