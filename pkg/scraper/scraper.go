@@ -1,4 +1,4 @@
-package scrapper
+package scraper
 
 import (
 	"context"
@@ -12,7 +12,7 @@ type Scrapper struct {
 	WillhabenClient *willhaben.Client
 }
 
-func New(ctx context.Context, willhabenSearchURLs []string) (*Scrapper, error) {
+func New(_ context.Context, willhabenSearchURLs []string) (*Scrapper, error) {
 	client := willhaben.NewClient(willhabenSearchURLs)
 
 	return &Scrapper{
@@ -38,5 +38,5 @@ func (s *Scrapper) Start(ctx context.Context) error {
 }
 
 func (s *Scrapper) ScrapeWillhabenTargets(ctx context.Context) error {
-	s.WillhabenClient.SearchListings()
+	return s.WillhabenClient.ScrapeListings(ctx)
 }
