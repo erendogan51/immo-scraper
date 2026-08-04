@@ -3,10 +3,10 @@ package config
 type Config struct {
 	DB     DBConfig     `env:", prefix=POSTGRES_, required"`
 	Bucket Bucket       `env:", prefix=BUCKET_, required"`
-	Logger LoggerConfig `env:", prefix=LOG_, required"`
+	Logger LoggerConfig `env:", prefix=LOG_"`
 
-	ListenPort  int `env:"LISTEN_PORT, required"`
-	MetricsPort int `env:"METRICS_PORT, required"`
+	ListenPort  int `env:"LISTEN_PORT, default=5151"`
+	MetricsPort int `env:"METRICS_PORT, default=5152"`
 }
 
 type DBConfig struct {
@@ -34,8 +34,8 @@ const (
 )
 
 type LoggerConfig struct {
-	LogLevel string   `env:"LEVEL"`
-	LogStyle LogStyle `env:"STYLE"`
+	LogLevel string   `env:"LEVEL, default=INFO"`
+	LogStyle LogStyle `env:"STYLE, default=json"`
 }
 
 type TLSConfig struct {
