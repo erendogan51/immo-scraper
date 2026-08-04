@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/erendogan51/immo-scrapper/pkg/db/sql"
-	"github.com/erendogan51/immo-scrapper/pkg/db/sql/db"
 	"github.com/google/uuid"
 
 	"github.com/erendogan51/immo-scrapper/pkg/models"
@@ -111,13 +111,21 @@ func (c *Client) SearchListings(ctx context.Context, seoPath string, params url.
 	return &result, nil
 }
 
-func (c *Client) ScrapeListings(ctx context.Context) {
+func (c *Client) ScrapeListings(ctx context.Context) error {
+	var multiErr error
 	for _, searchURL := range c.searchURLs {
 		err := c.scrapeTarget(ctx, searchURL)
 		if err != nil {
 			slog.Error(fmt.Sprintf("failed to scrape %s", searchURL), "error", err)
+			if multiErr == nil {
+				multiErr = err
+			} else {
+				multiErr = fmt.Errorf("%w: %w", multiErr, err)
+			}
 		}
 	}
+
+	return multiErr
 }
 
 func (c *Client) scrapeTarget(ctx context.Context, searchURL string) error {
@@ -126,7 +134,7 @@ func (c *Client) scrapeTarget(ctx context.Context, searchURL string) error {
 		return fmt.Errorf("parse search-url: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*10)
 	defer cancel()
 
 	resolvedPage := 0
@@ -145,18 +153,20 @@ func (c *Client) scrapeTarget(ctx context.Context, searchURL string) error {
 		return err
 	}
 
-	for lastListingsSize < defaultRows {
+	_ = queries
+
+	for lastListingsSize == defaultRows {
+		time.Sleep(time.Duration(rand.Intn(200)+500) * time.Millisecond)
+
 		result, err := c.SearchListings(ctx, seoPath, params, resolvedPage)
 		if err != nil {
 			return fmt.Errorf("search listings: %w", err)
 		}
 
-		queries.UpsertListing(ctx, db.UpsertListingParams{})
+		slog.Info(fmt.Sprintf("queries %d listings, page %d", len(result.Adverts()), resolvedPage))
 
 		lastListingsSize = len(result.Adverts())
 		resolvedPage++
-
-		return nil
 	}
 
 	return nil
