@@ -170,3 +170,43 @@ func (c *Client) do(req *http.Request, out any) error {
 
 	return nil
 }
+
+// newHTMLRequest builds a GET request for an HTML page (as opposed to
+// newRequest, which builds requests for the JSON search API).
+func (c *Client) newHTMLRequest(ctx context.Context, method, path string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("willhaben: build request: %w", err)
+	}
+
+	req.Header.Set("Accept", "text/html")
+	req.Header.Set("User-Agent", c.userAgent)
+
+	return req, nil
+}
+
+// doHTML executes req and returns its raw response body, for endpoints
+// (like a listing's detail page) that return HTML rather than willhaben's
+// usual JSON.
+func (c *Client) doHTML(req *http.Request) ([]byte, error) {
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("willhaben: request failed: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("willhaben: read response body: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, ErrUnauthorized
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(body)}
+	}
+
+	return body, nil
+}

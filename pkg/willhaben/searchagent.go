@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/erendogan51/immo-scrapper/pkg/db/sql"
+	"github.com/erendogan51/immo-scrapper/pkg/db/sql/db"
 	"github.com/google/uuid"
 
 	"github.com/erendogan51/immo-scrapper/pkg/models"
@@ -32,6 +33,29 @@ const searchPathPrefix = "/webapi/ad-search/search/atz/seo/"
 // defaultRows is the page size requested when none is otherwise specified,
 // matching willhaben's own default.
 const defaultRows = 30
+
+// pageDelay is how long scrapeTarget waits between requesting successive
+// search result pages.
+const pageDelay = 500 * time.Millisecond
+
+// pageDelayJitterMs is added to pageDelay, randomized, to avoid a
+// mechanically regular request cadence.
+const pageDelayJitterMs = 200
+
+// detailDelay is how long scrapeAdvert waits before fetching a listing's
+// detail page. It's longer than pageDelay since a detail page is a full
+// HTML fetch (heavier than the JSON search API) and is requested once per
+// advert rather than once per page of up to defaultRows adverts.
+const detailDelay = time.Second
+
+// detailDelayJitterMs is added to detailDelay, randomized.
+const detailDelayJitterMs = 1000
+
+// politeDelay sleeps for base plus a random jitter in [0, jitterMs)
+// milliseconds, to space out requests to willhaben.
+func politeDelay(base time.Duration, jitterMs int) {
+	time.Sleep(base + time.Duration(rand.Intn(jitterMs))*time.Millisecond)
+}
 
 // SearchAgentResult is the response of executing a saved search agent.
 type SearchAgentResult struct {
@@ -134,39 +158,64 @@ func (c *Client) scrapeTarget(ctx context.Context, searchURL string) error {
 		return fmt.Errorf("parse search-url: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*10)
-	defer cancel()
-
-	resolvedPage := 0
-	lastListingsSize := 0
-
-	result, err := c.SearchListings(ctx, seoPath, params, resolvedPage)
-	if err != nil {
-		return fmt.Errorf("search listings: %w", err)
-	}
-
-	resolvedPage = resolvePage(params)
-	lastListingsSize = len(result.Adverts())
-
 	queries, err := sql.GetDBQueries(ctx)
 	if err != nil {
 		return err
 	}
 
-	_ = queries
-
-	for lastListingsSize == defaultRows {
-		time.Sleep(time.Duration(rand.Intn(200)+500) * time.Millisecond)
-
-		result, err := c.SearchListings(ctx, seoPath, params, resolvedPage)
+	for page := resolvePage(params); ; page++ {
+		result, err := c.SearchListings(ctx, seoPath, params, page)
 		if err != nil {
 			return fmt.Errorf("search listings: %w", err)
 		}
 
-		slog.Info(fmt.Sprintf("queries %d listings, page %d", len(result.Adverts()), resolvedPage))
+		adverts := result.Adverts()
+		slog.Info(fmt.Sprintf("scraping %d listings, page %d", len(adverts), page))
 
-		lastListingsSize = len(result.Adverts())
-		resolvedPage++
+		for _, ad := range adverts {
+			// willhaben's search API has no filter to request private-seller
+			// listings only (confirmed against captured search traffic), so
+			// non-private adverts are dropped here instead - before the
+			// detail-page fetch and its delay, since we're not going to
+			// persist them anyway.
+			if !ad.Attributes.IsPrivate {
+				continue
+			}
+
+			politeDelay(detailDelay, detailDelayJitterMs)
+
+			if err := c.scrapeAdvert(ctx, queries, ad, seoPath); err != nil {
+				slog.Error(fmt.Sprintf("failed to scrape advert %s", ad.ID), "error", err)
+			}
+		}
+
+		if !result.HasMore() {
+			return nil
+		}
+
+		politeDelay(pageDelay, pageDelayJitterMs)
+	}
+}
+
+// scrapeAdvert fetches ad's listing detail page and upserts the combined
+// search-result and detail data. A detail-fetch failure isn't fatal to the
+// advert as a whole - it's still stored using only the data already
+// available from the search result, so a scrape isn't held back by one
+// listing's detail page (temporarily) failing to load.
+func (c *Client) scrapeAdvert(ctx context.Context, queries *db.Queries, ad models.AdvertSummary, searchPath string) error {
+	detail, err := c.GetListing(ctx, ad.SeoURL())
+	if err != nil {
+		slog.Error(fmt.Sprintf("failed to fetch listing detail for advert %s", ad.ID), "error", err)
+		detail = nil
+	}
+
+	params, err := toUpsertParams(ad, detail, searchPath)
+	if err != nil {
+		return fmt.Errorf("map advert %s: %w", ad.ID, err)
+	}
+
+	if err := queries.UpsertListing(ctx, params); err != nil {
+		return fmt.Errorf("upsert advert %s: %w", ad.ID, err)
 	}
 
 	return nil

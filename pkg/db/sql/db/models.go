@@ -5,46 +5,56 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	decimal "github.com/jackc/pgx-shopspring-decimal"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ImmoListing struct {
-	AdID           string             `db:"ad_id" json:"ad_id"`
-	VerticalID     int32              `db:"vertical_id" json:"vertical_id"`
-	AdTypeID       int32              `db:"ad_type_id" json:"ad_type_id"`
-	ProductID      int32              `db:"product_id" json:"product_id"`
-	AdvertStatusID string             `db:"advert_status_id" json:"advert_status_id"`
-	AdvertStatus   string             `db:"advert_status" json:"advert_status"`
-	Description    string             `db:"description" json:"description"`
-	Heading        pgtype.Text        `db:"heading" json:"heading"`
-	PropertyType   pgtype.Text        `db:"property_type" json:"property_type"`
-	RoomsLayout    pgtype.Text        `db:"rooms_layout" json:"rooms_layout"`
-	NumberOfRooms  *decimal.Decimal   `db:"number_of_rooms" json:"number_of_rooms"`
-	Floor          pgtype.Int4        `db:"floor" json:"floor"`
-	Address        pgtype.Text        `db:"address" json:"address"`
-	Location       pgtype.Text        `db:"location" json:"location"`
-	District       pgtype.Text        `db:"district" json:"district"`
-	State          pgtype.Text        `db:"state" json:"state"`
-	Country        pgtype.Text        `db:"country" json:"country"`
-	Postcode       pgtype.Text        `db:"postcode" json:"postcode"`
-	Latitude       pgtype.Float8      `db:"latitude" json:"latitude"`
-	Longitude      pgtype.Float8      `db:"longitude" json:"longitude"`
-	LivingAreaSqm  pgtype.Int4        `db:"living_area_sqm" json:"living_area_sqm"`
-	UsableAreaSqm  pgtype.Int4        `db:"usable_area_sqm" json:"usable_area_sqm"`
-	EstateSizeSqm  pgtype.Int4        `db:"estate_size_sqm" json:"estate_size_sqm"`
-	Price          *decimal.Decimal   `db:"price" json:"price"`
-	PriceDisplay   pgtype.Text        `db:"price_display" json:"price_display"`
-	PricePerSqm    *decimal.Decimal   `db:"price_per_sqm" json:"price_per_sqm"`
-	RentPerMonth   *decimal.Decimal   `db:"rent_per_month" json:"rent_per_month"`
-	OrgID          pgtype.Text        `db:"org_id" json:"org_id"`
-	OrgName        pgtype.Text        `db:"org_name" json:"org_name"`
-	IsPrivate      bool               `db:"is_private" json:"is_private"`
-	MainImage      pgtype.Text        `db:"main_image" json:"main_image"`
-	SeoUrl         string             `db:"seo_url" json:"seo_url"`
-	PublishedAt    pgtype.Timestamptz `db:"published_at" json:"published_at"`
-	Attributes     []byte             `db:"attributes" json:"attributes"`
-	SearchPath     pgtype.Text        `db:"search_path" json:"search_path"`
-	FirstSeenAt    pgtype.Timestamptz `db:"first_seen_at" json:"first_seen_at"`
-	LastSeenAt     pgtype.Timestamptz `db:"last_seen_at" json:"last_seen_at"`
+	AdID             string             `db:"ad_id" json:"ad_id"`
+	VerticalID       int32              `db:"vertical_id" json:"vertical_id"`
+	AdTypeID         int32              `db:"ad_type_id" json:"ad_type_id"`
+	ProductID        int32              `db:"product_id" json:"product_id"`
+	AdvertStatusID   string             `db:"advert_status_id" json:"advert_status_id"`
+	AdvertStatus     string             `db:"advert_status" json:"advert_status"`
+	Description      string             `db:"description" json:"description"`
+	Heading          pgtype.Text        `db:"heading" json:"heading"`
+	PropertyType     pgtype.Text        `db:"property_type" json:"property_type"`
+	RoomsLayout      pgtype.Text        `db:"rooms_layout" json:"rooms_layout"`
+	NumberOfRooms    *decimal.Decimal   `db:"number_of_rooms" json:"number_of_rooms"`
+	Floor            pgtype.Int4        `db:"floor" json:"floor"`
+	Address          pgtype.Text        `db:"address" json:"address"`
+	Location         pgtype.Text        `db:"location" json:"location"`
+	District         pgtype.Text        `db:"district" json:"district"`
+	State            pgtype.Text        `db:"state" json:"state"`
+	Country          pgtype.Text        `db:"country" json:"country"`
+	Postcode         pgtype.Text        `db:"postcode" json:"postcode"`
+	Latitude         pgtype.Float8      `db:"latitude" json:"latitude"`
+	Longitude        pgtype.Float8      `db:"longitude" json:"longitude"`
+	LivingAreaSqm    pgtype.Int4        `db:"living_area_sqm" json:"living_area_sqm"`
+	UsableAreaSqm    pgtype.Int4        `db:"usable_area_sqm" json:"usable_area_sqm"`
+	EstateSizeSqm    pgtype.Int4        `db:"estate_size_sqm" json:"estate_size_sqm"`
+	Price            *decimal.Decimal   `db:"price" json:"price"`
+	PriceDisplay     pgtype.Text        `db:"price_display" json:"price_display"`
+	PricePerSqm      *decimal.Decimal   `db:"price_per_sqm" json:"price_per_sqm"`
+	RentPerMonth     *decimal.Decimal   `db:"rent_per_month" json:"rent_per_month"`
+	OrgID            pgtype.Text        `db:"org_id" json:"org_id"`
+	OrgName          pgtype.Text        `db:"org_name" json:"org_name"`
+	IsPrivate        bool               `db:"is_private" json:"is_private"`
+	MainImage        pgtype.Text        `db:"main_image" json:"main_image"`
+	SeoUrl           string             `db:"seo_url" json:"seo_url"`
+	PublishedAt      pgtype.Timestamptz `db:"published_at" json:"published_at"`
+	Attributes       []byte             `db:"attributes" json:"attributes"`
+	SearchPath       pgtype.Text        `db:"search_path" json:"search_path"`
+	AdUuid           uuid.NullUUID      `db:"ad_uuid" json:"ad_uuid"`
+	StartDate        pgtype.Timestamptz `db:"start_date" json:"start_date"`
+	EndDate          pgtype.Timestamptz `db:"end_date" json:"end_date"`
+	FirstPublishedAt pgtype.Timestamptz `db:"first_published_at" json:"first_published_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	ChangedAt        pgtype.Timestamptz `db:"changed_at" json:"changed_at"`
+	Municipality     pgtype.Text        `db:"municipality" json:"municipality"`
+	CanonicalUrl     pgtype.Text        `db:"canonical_url" json:"canonical_url"`
+	Images           []byte             `db:"images" json:"images"`
+	FirstSeenAt      pgtype.Timestamptz `db:"first_seen_at" json:"first_seen_at"`
+	LastSeenAt       pgtype.Timestamptz `db:"last_seen_at" json:"last_seen_at"`
 }

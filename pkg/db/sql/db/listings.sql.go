@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	decimal "github.com/jackc/pgx-shopspring-decimal"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -37,7 +38,7 @@ func (q *Queries) DeleteListing(ctx context.Context, adID string) error {
 }
 
 const getListing = `-- name: GetListing :one
-SELECT ad_id, vertical_id, ad_type_id, product_id, advert_status_id, advert_status, description, heading, property_type, rooms_layout, number_of_rooms, floor, address, location, district, state, country, postcode, latitude, longitude, living_area_sqm, usable_area_sqm, estate_size_sqm, price, price_display, price_per_sqm, rent_per_month, org_id, org_name, is_private, main_image, seo_url, published_at, attributes, search_path, first_seen_at, last_seen_at
+SELECT ad_id, vertical_id, ad_type_id, product_id, advert_status_id, advert_status, description, heading, property_type, rooms_layout, number_of_rooms, floor, address, location, district, state, country, postcode, latitude, longitude, living_area_sqm, usable_area_sqm, estate_size_sqm, price, price_display, price_per_sqm, rent_per_month, org_id, org_name, is_private, main_image, seo_url, published_at, attributes, search_path, ad_uuid, start_date, end_date, first_published_at, created_at, changed_at, municipality, canonical_url, images, first_seen_at, last_seen_at
 FROM immo_listings
 WHERE ad_id = $1
 `
@@ -81,6 +82,15 @@ func (q *Queries) GetListing(ctx context.Context, adID string) (ImmoListing, err
 		&i.PublishedAt,
 		&i.Attributes,
 		&i.SearchPath,
+		&i.AdUuid,
+		&i.StartDate,
+		&i.EndDate,
+		&i.FirstPublishedAt,
+		&i.CreatedAt,
+		&i.ChangedAt,
+		&i.Municipality,
+		&i.CanonicalUrl,
+		&i.Images,
 		&i.FirstSeenAt,
 		&i.LastSeenAt,
 	)
@@ -88,7 +98,7 @@ func (q *Queries) GetListing(ctx context.Context, adID string) (ImmoListing, err
 }
 
 const listListings = `-- name: ListListings :many
-SELECT ad_id, vertical_id, ad_type_id, product_id, advert_status_id, advert_status, description, heading, property_type, rooms_layout, number_of_rooms, floor, address, location, district, state, country, postcode, latitude, longitude, living_area_sqm, usable_area_sqm, estate_size_sqm, price, price_display, price_per_sqm, rent_per_month, org_id, org_name, is_private, main_image, seo_url, published_at, attributes, search_path, first_seen_at, last_seen_at
+SELECT ad_id, vertical_id, ad_type_id, product_id, advert_status_id, advert_status, description, heading, property_type, rooms_layout, number_of_rooms, floor, address, location, district, state, country, postcode, latitude, longitude, living_area_sqm, usable_area_sqm, estate_size_sqm, price, price_display, price_per_sqm, rent_per_month, org_id, org_name, is_private, main_image, seo_url, published_at, attributes, search_path, ad_uuid, start_date, end_date, first_published_at, created_at, changed_at, municipality, canonical_url, images, first_seen_at, last_seen_at
 FROM immo_listings
 WHERE $1::varchar IS NULL OR search_path = $1
 ORDER BY last_seen_at DESC, ad_id
@@ -146,6 +156,15 @@ func (q *Queries) ListListings(ctx context.Context, arg ListListingsParams) ([]I
 			&i.PublishedAt,
 			&i.Attributes,
 			&i.SearchPath,
+			&i.AdUuid,
+			&i.StartDate,
+			&i.EndDate,
+			&i.FirstPublishedAt,
+			&i.CreatedAt,
+			&i.ChangedAt,
+			&i.Municipality,
+			&i.CanonicalUrl,
+			&i.Images,
 			&i.FirstSeenAt,
 			&i.LastSeenAt,
 		); err != nil {
@@ -194,7 +213,16 @@ INSERT INTO immo_listings (ad_id,
                             seo_url,
                             published_at,
                             attributes,
-                            search_path)
+                            search_path,
+                            ad_uuid,
+                            start_date,
+                            end_date,
+                            first_published_at,
+                            created_at,
+                            changed_at,
+                            municipality,
+                            canonical_url,
+                            images)
 VALUES ($1,
         $2,
         $3,
@@ -229,7 +257,16 @@ VALUES ($1,
         $32,
         $33,
         $34,
-        $35)
+        $35,
+        $36,
+        $37,
+        $38,
+        $39,
+        $40,
+        $41,
+        $42,
+        $43,
+        $44)
 ON CONFLICT (ad_id) DO UPDATE SET vertical_id      = excluded.vertical_id,
                                    ad_type_id       = excluded.ad_type_id,
                                    product_id       = excluded.product_id,
@@ -264,45 +301,63 @@ ON CONFLICT (ad_id) DO UPDATE SET vertical_id      = excluded.vertical_id,
                                    published_at     = excluded.published_at,
                                    attributes       = excluded.attributes,
                                    search_path      = excluded.search_path,
+                                   ad_uuid          = excluded.ad_uuid,
+                                   start_date       = excluded.start_date,
+                                   end_date         = excluded.end_date,
+                                   first_published_at = excluded.first_published_at,
+                                   created_at       = excluded.created_at,
+                                   changed_at       = excluded.changed_at,
+                                   municipality     = excluded.municipality,
+                                   canonical_url    = excluded.canonical_url,
+                                   images           = excluded.images,
                                    last_seen_at     = now()
 `
 
 type UpsertListingParams struct {
-	AdID           string             `db:"ad_id" json:"ad_id"`
-	VerticalID     int32              `db:"vertical_id" json:"vertical_id"`
-	AdTypeID       int32              `db:"ad_type_id" json:"ad_type_id"`
-	ProductID      int32              `db:"product_id" json:"product_id"`
-	AdvertStatusID string             `db:"advert_status_id" json:"advert_status_id"`
-	AdvertStatus   string             `db:"advert_status" json:"advert_status"`
-	Description    string             `db:"description" json:"description"`
-	Heading        pgtype.Text        `db:"heading" json:"heading"`
-	PropertyType   pgtype.Text        `db:"property_type" json:"property_type"`
-	RoomsLayout    pgtype.Text        `db:"rooms_layout" json:"rooms_layout"`
-	NumberOfRooms  *decimal.Decimal   `db:"number_of_rooms" json:"number_of_rooms"`
-	Floor          pgtype.Int4        `db:"floor" json:"floor"`
-	Address        pgtype.Text        `db:"address" json:"address"`
-	Location       pgtype.Text        `db:"location" json:"location"`
-	District       pgtype.Text        `db:"district" json:"district"`
-	State          pgtype.Text        `db:"state" json:"state"`
-	Country        pgtype.Text        `db:"country" json:"country"`
-	Postcode       pgtype.Text        `db:"postcode" json:"postcode"`
-	Latitude       pgtype.Float8      `db:"latitude" json:"latitude"`
-	Longitude      pgtype.Float8      `db:"longitude" json:"longitude"`
-	LivingAreaSqm  pgtype.Int4        `db:"living_area_sqm" json:"living_area_sqm"`
-	UsableAreaSqm  pgtype.Int4        `db:"usable_area_sqm" json:"usable_area_sqm"`
-	EstateSizeSqm  pgtype.Int4        `db:"estate_size_sqm" json:"estate_size_sqm"`
-	Price          *decimal.Decimal   `db:"price" json:"price"`
-	PriceDisplay   pgtype.Text        `db:"price_display" json:"price_display"`
-	PricePerSqm    *decimal.Decimal   `db:"price_per_sqm" json:"price_per_sqm"`
-	RentPerMonth   *decimal.Decimal   `db:"rent_per_month" json:"rent_per_month"`
-	OrgID          pgtype.Text        `db:"org_id" json:"org_id"`
-	OrgName        pgtype.Text        `db:"org_name" json:"org_name"`
-	IsPrivate      bool               `db:"is_private" json:"is_private"`
-	MainImage      pgtype.Text        `db:"main_image" json:"main_image"`
-	SeoUrl         string             `db:"seo_url" json:"seo_url"`
-	PublishedAt    pgtype.Timestamptz `db:"published_at" json:"published_at"`
-	Attributes     []byte             `db:"attributes" json:"attributes"`
-	SearchPath     pgtype.Text        `db:"search_path" json:"search_path"`
+	AdID             string             `db:"ad_id" json:"ad_id"`
+	VerticalID       int32              `db:"vertical_id" json:"vertical_id"`
+	AdTypeID         int32              `db:"ad_type_id" json:"ad_type_id"`
+	ProductID        int32              `db:"product_id" json:"product_id"`
+	AdvertStatusID   string             `db:"advert_status_id" json:"advert_status_id"`
+	AdvertStatus     string             `db:"advert_status" json:"advert_status"`
+	Description      string             `db:"description" json:"description"`
+	Heading          pgtype.Text        `db:"heading" json:"heading"`
+	PropertyType     pgtype.Text        `db:"property_type" json:"property_type"`
+	RoomsLayout      pgtype.Text        `db:"rooms_layout" json:"rooms_layout"`
+	NumberOfRooms    *decimal.Decimal   `db:"number_of_rooms" json:"number_of_rooms"`
+	Floor            pgtype.Int4        `db:"floor" json:"floor"`
+	Address          pgtype.Text        `db:"address" json:"address"`
+	Location         pgtype.Text        `db:"location" json:"location"`
+	District         pgtype.Text        `db:"district" json:"district"`
+	State            pgtype.Text        `db:"state" json:"state"`
+	Country          pgtype.Text        `db:"country" json:"country"`
+	Postcode         pgtype.Text        `db:"postcode" json:"postcode"`
+	Latitude         pgtype.Float8      `db:"latitude" json:"latitude"`
+	Longitude        pgtype.Float8      `db:"longitude" json:"longitude"`
+	LivingAreaSqm    pgtype.Int4        `db:"living_area_sqm" json:"living_area_sqm"`
+	UsableAreaSqm    pgtype.Int4        `db:"usable_area_sqm" json:"usable_area_sqm"`
+	EstateSizeSqm    pgtype.Int4        `db:"estate_size_sqm" json:"estate_size_sqm"`
+	Price            *decimal.Decimal   `db:"price" json:"price"`
+	PriceDisplay     pgtype.Text        `db:"price_display" json:"price_display"`
+	PricePerSqm      *decimal.Decimal   `db:"price_per_sqm" json:"price_per_sqm"`
+	RentPerMonth     *decimal.Decimal   `db:"rent_per_month" json:"rent_per_month"`
+	OrgID            pgtype.Text        `db:"org_id" json:"org_id"`
+	OrgName          pgtype.Text        `db:"org_name" json:"org_name"`
+	IsPrivate        bool               `db:"is_private" json:"is_private"`
+	MainImage        pgtype.Text        `db:"main_image" json:"main_image"`
+	SeoUrl           string             `db:"seo_url" json:"seo_url"`
+	PublishedAt      pgtype.Timestamptz `db:"published_at" json:"published_at"`
+	Attributes       []byte             `db:"attributes" json:"attributes"`
+	SearchPath       pgtype.Text        `db:"search_path" json:"search_path"`
+	AdUuid           uuid.NullUUID      `db:"ad_uuid" json:"ad_uuid"`
+	StartDate        pgtype.Timestamptz `db:"start_date" json:"start_date"`
+	EndDate          pgtype.Timestamptz `db:"end_date" json:"end_date"`
+	FirstPublishedAt pgtype.Timestamptz `db:"first_published_at" json:"first_published_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	ChangedAt        pgtype.Timestamptz `db:"changed_at" json:"changed_at"`
+	Municipality     pgtype.Text        `db:"municipality" json:"municipality"`
+	CanonicalUrl     pgtype.Text        `db:"canonical_url" json:"canonical_url"`
+	Images           []byte             `db:"images" json:"images"`
 }
 
 func (q *Queries) UpsertListing(ctx context.Context, arg UpsertListingParams) error {
@@ -342,6 +397,15 @@ func (q *Queries) UpsertListing(ctx context.Context, arg UpsertListingParams) er
 		arg.PublishedAt,
 		arg.Attributes,
 		arg.SearchPath,
+		arg.AdUuid,
+		arg.StartDate,
+		arg.EndDate,
+		arg.FirstPublishedAt,
+		arg.CreatedAt,
+		arg.ChangedAt,
+		arg.Municipality,
+		arg.CanonicalUrl,
+		arg.Images,
 	)
 	return err
 }

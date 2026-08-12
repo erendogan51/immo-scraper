@@ -349,6 +349,17 @@ func (a *Attributes) set(name string, values []string) bool {
 // willhaben's {"attribute": [{"name": "...", "values": ["..."]}, ...]} wire
 // format.
 func (a *Attributes) MarshalJSON() ([]byte, error) {
+	wire := struct {
+		Attribute []wireAttribute `json:"attribute"`
+	}{Attribute: a.wire()}
+
+	return json.Marshal(wire)
+}
+
+// wire rebuilds the willhaben wire-format attribute list ([]wireAttribute)
+// from a's typed fields plus Extra. Factored out of MarshalJSON so Merge can
+// reuse it without going through JSON.
+func (a *Attributes) wire() []wireAttribute {
 	var attrs []wireAttribute
 
 	add := func(name, value string) {
@@ -374,7 +385,9 @@ func (a *Attributes) MarshalJSON() ([]byte, error) {
 		}
 	}
 	addBool := func(name string, value bool) {
-		add(name, strconv.FormatBool(value))
+		if value {
+			add(name, strconv.FormatBool(value))
+		}
 	}
 
 	add("ADID", a.AdID)
@@ -457,11 +470,47 @@ func (a *Attributes) MarshalJSON() ([]byte, error) {
 		addValues(name, a.Extra[name])
 	}
 
-	wire := struct {
-		Attribute []wireAttribute `json:"attribute"`
-	}{Attribute: attrs}
+	return attrs
+}
 
-	return json.Marshal(wire)
+// Merge combines a with other into a new Attributes, attribute name by
+// attribute name: other's value wins wherever both bags name the same
+// attribute, but names only one of them has are kept. This is for combining
+// a search result's attribute bag with a listing detail page's - the two
+// overlap heavily but aren't identical, both in which attributes they carry
+// (search-only: HEADING, SEO_URL, ALL_IMAGE_URLS, COORDINATES, flattened
+// LOCATION/ADDRESS/DISTRICT/STATE/COUNTRY/POSTCODE; detail-only: full
+// DESCRIPTION body, energy/construction/contact attributes, ...) and in the
+// names used for the same fact (e.g. search's NUMBER_OF_ROOMS vs a detail
+// page's NO_OF_ROOMS - both end up preserved, just under separate names).
+func (a Attributes) Merge(other Attributes) Attributes {
+	byName := make(map[string][]string, len(a.Extra)+len(other.Extra))
+	var order []string
+
+	take := func(wire []wireAttribute) {
+		for _, attr := range wire {
+			if _, ok := byName[attr.Name]; !ok {
+				order = append(order, attr.Name)
+			}
+			byName[attr.Name] = attr.Values
+		}
+	}
+	take(a.wire())
+	take(other.wire())
+
+	var merged Attributes
+	for _, name := range order {
+		values := byName[name]
+		if merged.set(name, values) {
+			continue
+		}
+		if merged.Extra == nil {
+			merged.Extra = make(map[string][]string)
+		}
+		merged.Extra[name] = values
+	}
+
+	return merged
 }
 
 func parseInt(s string) (int, bool) {

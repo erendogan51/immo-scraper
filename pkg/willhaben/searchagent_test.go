@@ -52,7 +52,7 @@ func TestSearchListings(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(WithBaseURL(server.URL))
+	client := NewClient(nil, WithBaseURL(server.URL))
 
 	result, err := client.SearchListings(t.Context(), "immobilien/mietwohnungen/wien", url.Values{"NO_OF_ROOMS": {"2"}}, 1)
 	if err != nil {
@@ -113,7 +113,7 @@ func TestSearchListingsUnauthorized(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(WithBaseURL(server.URL))
+	client := NewClient(nil, WithBaseURL(server.URL))
 
 	_, err := client.SearchListings(t.Context(), "immobilien/mietwohnungen/wien", nil, 1)
 	if !errors.Is(err, ErrUnauthorized) {
@@ -130,7 +130,7 @@ func TestSearchListingsServerError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(WithBaseURL(server.URL))
+	client := NewClient(nil, WithBaseURL(server.URL))
 
 	_, err := client.SearchListings(t.Context(), "immobilien/mietwohnungen/wien", nil, 1)
 	if err == nil {
