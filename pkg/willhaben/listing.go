@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/erendogan51/immo-scrapper/pkg/models"
+	"github.com/erendogan51/immo-scraper/pkg/models"
 )
 
 // ListingResult is a single listing as returned by willhaben's listing

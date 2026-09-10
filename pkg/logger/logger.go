@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/erendogan51/immo-scrapper/pkg/config"
+	"github.com/erendogan51/immo-scraper/pkg/config"
 )
 
 func SetLogger(cfg config.LoggerConfig) error {

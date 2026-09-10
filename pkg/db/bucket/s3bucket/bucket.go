@@ -11,7 +11,7 @@ import (
 	awsv2cfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	s3v2 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/erendogan51/immo-scrapper/pkg/config"
+	"github.com/erendogan51/immo-scraper/pkg/config"
 	"gocloud.dev/blob/s3blob"
 
 	"github.com/rs/zerolog/log"

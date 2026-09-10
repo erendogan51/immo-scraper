@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/erendogan51/immo-scrapper/pkg/willhaben"
+	"github.com/erendogan51/immo-scraper/pkg/willhaben"
 )
 
 type Scrapper struct {

@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/erendogan51/immo-scrapper/pkg/config"
-	"github.com/erendogan51/immo-scrapper/pkg/db/sql/db"
-	"github.com/golang-migrate/migrate/v4"
+	"github.com/erendogan51/immo-scraper/pkg/config"
+	"github.com/erendogan51/immo-scraper/pkg/db/sql/db"
+	migrate "github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	pgxmigrate "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	pgxdecimal "github.com/jackc/pgx-shopspring-decimal"
-	"github.com/jackc/pgx/v5"
+	pgx "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 )

@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/erendogan51/immo-scrapper/pkg/config"
-	"github.com/erendogan51/immo-scrapper/pkg/logger"
-	"github.com/erendogan51/immo-scrapper/pkg/monitoring"
+	"github.com/erendogan51/immo-scraper/pkg/config"
+	"github.com/erendogan51/immo-scraper/pkg/logger"
+	"github.com/erendogan51/immo-scraper/pkg/monitoring"
 )
 
 const requestTimeout = 60 * time.Second

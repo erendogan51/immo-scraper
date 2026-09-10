@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/erendogan51/immo-scrapper/pkg/db/sql"
-	"github.com/erendogan51/immo-scrapper/pkg/db/sql/db"
+	"github.com/erendogan51/immo-scraper/pkg/db/sql"
+	"github.com/erendogan51/immo-scraper/pkg/db/sql/db"
 	"github.com/google/uuid"
 
-	"github.com/erendogan51/immo-scrapper/pkg/models"
+	"github.com/erendogan51/immo-scraper/pkg/models"
 )
 
 // searchDateLayout matches willhaben's date format, e.g.
@@ -32,7 +32,7 @@ const searchPathPrefix = "/webapi/ad-search/search/atz/seo/"
 
 // defaultRows is the page size requested when none is otherwise specified,
 // matching willhaben's own default.
-const defaultRows = 30
+const defaultRows = 200
 
 // pageDelay is how long scrapeTarget waits between requesting successive
 // search result pages.
@@ -166,7 +166,8 @@ func (c *Client) scrapeTarget(ctx context.Context, searchURL string) error {
 	for page := resolvePage(params); ; page++ {
 		result, err := c.SearchListings(ctx, seoPath, params, page)
 		if err != nil {
-			return fmt.Errorf("search listings: %w", err)
+			slog.Error("search listings error", "error", err)
+			continue
 		}
 
 		adverts := result.Adverts()

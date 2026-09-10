@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	common "github.com/erendogan51/immo-scrapper/pkg/db/bucket"
+	common "github.com/erendogan51/immo-scraper/pkg/db/bucket"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/memblob"
 	"gocloud.dev/gcerrors"
