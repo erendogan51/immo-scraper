@@ -1,0 +1,37 @@
+name: Build Images
+
+on:
+  push:
+    tags: ["**"]
+    branches: ["main"]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GH_ACCESS_TOKEN: ${{ secrets.GH_TOKEN }}
+      CGO_ENABLED: 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Install Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.27"
+          cache: false
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - name: Run Tests
+        run: go test ./... -race -shuffle=on
+      - uses: ko-build/setup-ko@v0.10
+        with:
+          use-sudo: 'true'
+        env:
+          KO_DOCKER_REPO: ${{ secrets.REGISTRY }}/erendogan51
+      - run: ./hack/image_tags.sh
+        id: get-tags
+      - name: Build and Push
+        run: |
+          ko login ${{ secrets.REGISTRY }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin ${{ secrets.REGISTRY_PASSWORD }}
+          ko build --tags=${{ steps.get-tags.outputs.IMAGE_TAGS }} --base-import-paths ./cmd/immo-scaper

@@ -1,0 +1,58 @@
+name: Test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GH_ACCESS_TOKEN: ${{ secrets.GH_TOKEN }}
+      CGO_ENABLED: 1
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.27"
+          cache: false
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - name: Test
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+          go test ./... -race -shuffle=on -cover -coverprofile=coverage.out -json 2>&1 | go-junit-report -parser gojson -set-exit-code > report.xml
+      - name: Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            report.xml
+        if: always()
+      - name: upload test coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage.out
+          path: coverage.out
+          compression-level: 0
+          overwrite: true
+          retention-days: 1
+  coverage:
+    runs-on: ubuntu-latest
+    needs:
+      - test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: coverage.out
+      - name: Install Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.27"
+          cache: false
+      - name: check test coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          config: ./.testcoverage.yaml

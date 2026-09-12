@@ -1,0 +1,58 @@
+name: Release Latest Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Fetch all tags
+        run: git fetch --tags --force
+
+      - name: Determine latest semver tag
+        id: latest_tag
+        run: |
+          # Get all tags starting with v and sort them semantically
+          TAGS=$(git tag -l "v*" | sort -V)
+
+          echo "All tags:"
+          echo "$TAGS"
+
+          LATEST=$(echo "$TAGS" | tail -n 1)
+
+          echo "Latest tag: $LATEST"
+          echo "latest=$LATEST" >> $GITHUB_OUTPUT
+
+      - name: Check if pushed tag is the latest
+        id: check_tag
+        run: |
+          PUSHED_TAG=${GITHUB_REF#refs/tags/}
+          LATEST_TAG=${{ steps.latest_tag.outputs.latest }}
+
+          echo "Pushed tag: $PUSHED_TAG"
+          echo "Latest tag: $LATEST_TAG"
+
+          if [ "$PUSHED_TAG" != "$LATEST_TAG" ]; then
+            echo "This is not the latest tag. Skipping release."
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "This is the latest tag. Proceeding."
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

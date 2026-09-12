@@ -1,6 +1,6 @@
 builds:
   - id: receiver
-    main: ./cmd/immo-scrapper
+    main: ./cmd/immo-scraper
     flags:
       - -trimpath
     env:

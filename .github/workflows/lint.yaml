@@ -1,0 +1,26 @@
+name: Lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/yqapp/*
+      GH_ACCESS_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.27"
+          cache: false
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          skip-cache: true
+          only-new-issues: true
