@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 const execSuccessBody = `{
@@ -65,7 +68,11 @@ func TestSearchListings(t *testing.T) {
 	if gotQuery.Get("page") != "1" {
 		t.Errorf("page = %q, want 1", gotQuery.Get("page"))
 	}
-	if gotQuery.Get("rows") != "30" {
+
+	gottenRows, err := strconv.Atoi(gotQuery.Get("rows"))
+	require.NoError(t, err)
+
+	if gottenRows != defaultRows {
 		t.Errorf("rows = %q, want 30", gotQuery.Get("rows"))
 	}
 	if gotQuery.Get("NO_OF_ROOMS") != "2" {
