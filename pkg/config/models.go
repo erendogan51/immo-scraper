@@ -2,7 +2,6 @@ package config
 
 type Config struct {
 	DB     DBConfig     `env:", prefix=POSTGRES_, required"`
-	Bucket Bucket       `env:", prefix=BUCKET_, required"`
 	Logger LoggerConfig `env:", prefix=LOG_"`
 
 	ListenPort  int `env:"LISTEN_PORT, default=5151"`
