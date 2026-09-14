@@ -34,4 +34,4 @@ jobs:
       - name: Build and Push
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" | ko login ${{ secrets.REGISTRY }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
-          ko build --tags=${{ steps.get-tags.outputs.IMAGE_TAGS }} --base-import-paths ./cmd/immo-scaper
+          ko build --tags=${{ steps.get-tags.outputs.IMAGE_TAGS }} --base-import-paths ./cmd/immo-scraper

@@ -1,5 +1,5 @@
 builds:
-  - id: receiver
+  - id: immo-scraper
     main: ./cmd/immo-scraper
     flags:
       - -trimpath
