@@ -28,7 +28,7 @@ jobs:
         with:
           use-sudo: 'true'
         env:
-          KO_DOCKER_REPO: ${{ secrets.REGISTRY }}/erendogan51
+          KO_DOCKER_REPO: ${{ secrets.REGISTRY }}/eren51
       - run: ./hack/image_tags.sh
         id: get-tags
       - name: Build and Push

@@ -14,8 +14,6 @@ import (
 	"github.com/erendogan51/immo-scraper/pkg/scraper"
 )
 
-const requestTimeout = 60 * time.Second
-
 func main() {
 	ctx := context.Background()
 
@@ -48,7 +46,7 @@ func main() {
 		}
 	}()
 
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(1 * time.Hour)
 	for t := range ticker.C {
 		if t.Hour() != 0 {
 			continue
