@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/erendogan51/immo-scraper/pkg/config"
+	"github.com/erendogan51/immo-scraper/pkg/db/sql"
 	"github.com/erendogan51/immo-scraper/pkg/logger"
 	"github.com/erendogan51/immo-scraper/pkg/monitoring"
 	"github.com/erendogan51/immo-scraper/pkg/scraper"
@@ -23,6 +24,11 @@ func main() {
 	}
 
 	err = logger.SetLogger(cfg.Logger)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = sql.GetDBPool(ctx, cfg.DB)
 	if err != nil {
 		panic(err)
 	}
